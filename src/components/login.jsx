@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router'; 
-import { UserIcon, LockClosedIcon } from '@heroicons/react/24/solid';
-
-const mockUsers = [
-  { id: 1, email: 'john.doe@example.com', password: 'password123', role: 'customer' },
-  { id: 2, email: 'chef.simon@example.com', password: 'chef123', role: 'chef' },
-];
+import React, { useState } from "react";
+import { NavLink, useNavigate } from "react-router";
+import { UserIcon, LockClosedIcon } from "@heroicons/react/24/solid";
+import { UserLogin } from "../core/services/auth.service";
+import { cacheUserSession, getTokenExpiry } from "../core/utils";
+import Button from "./button";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [btnLoading, setBtnLoading] = useState(false);
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
@@ -19,29 +18,50 @@ const Login = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
-    if (!formData.password.trim()) newErrors.password = 'Password is required';
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
+      newErrors.email = "Invalid email format";
+    if (!formData.password.trim()) newErrors.password = "Password is required";
     return newErrors;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setBtnLoading(true);
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
-    const user = mockUsers.find(
-      (u) => u.email === formData.email && u.password === formData.password
-    );
-    if (!user) {
-      setErrors({ submit: 'Invalid email or password' });
-      return;
-    }
-    localStorage.setItem('chefSyUser', JSON.stringify(user));
-    setErrors({});
-    navigate(user.role === 'customer' ? '/dashboard' : '/chef-dashboard');
+    const loginData = {
+      email: formData.email,
+      password: formData.password,
+    };
+
+    UserLogin(loginData)
+      .then((res) => {
+        console.log(res.data);
+        setBtnLoading(false);
+        const accessToken = res?.data.accessToken;
+        const expiryDate = getTokenExpiry(accessToken);
+        cacheUserSession(
+          res?.data.accessToken,
+          res?.data.user.role,
+          expiryDate
+        );
+        window.location.href =
+          res?.data.user.role === "customer" ? "/dashboard" : "/chef-dashboard";
+      })
+      .catch((err) => {
+        console.log(err);
+        setBtnLoading(false);
+        if (err.response && err.response.status === 401) {
+          setErrors({ submit: "Invalid email or password" });
+        } else {
+          setBtnLoading(false);
+          setErrors({ submit: "An error occurred. Please try again." });
+        }
+      });
   };
 
   return (
@@ -53,7 +73,10 @@ const Login = () => {
           </h1>
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email
               </label>
               <div className="relative">
@@ -68,10 +91,17 @@ const Login = () => {
                 />
                 <UserIcon className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               </div>
-              {errors.email && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.email}</p>}
+              {errors.email && (
+                <p className="text-red-500 text-xs sm:text-sm mt-1">
+                  {errors.email}
+                </p>
+              )}
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <div className="relative">
@@ -86,18 +116,26 @@ const Login = () => {
                 />
                 <LockClosedIcon className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               </div>
-              {errors.password && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.password}</p>}
+              {errors.password && (
+                <p className="text-red-500 text-xs sm:text-sm mt-1">
+                  {errors.password}
+                </p>
+              )}
             </div>
-            <button
-              type="submit"
+            <Button
+              type={"submit"}
+              isLoading={btnLoading}
+              text={"Login"}
               className="w-full bg-green-500 text-white font-semibold py-2 sm:py-3 px-4 sm:px-6 rounded-full hover:bg-green-600 transition-colors duration-300 text-sm sm:text-base"
-            >
-              Log In
-            </button>
-            {errors.submit && <p className="text-red-500 text-xs sm:text-sm text-center">{errors.submit}</p>}
+            />
+            {errors.submit && (
+              <p className="text-red-500 text-xs sm:text-sm text-center">
+                {errors.submit}
+              </p>
+            )}
           </form>
           <p className="text-center text-gray-600 text-sm sm:text-base mt-4 sm:mt-6">
-            Don’t have an account?{' '}
+            Don’t have an account?{" "}
             <NavLink to="/register" className="text-orange-600 hover:underline">
               Sign Up
             </NavLink>

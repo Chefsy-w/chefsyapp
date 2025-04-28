@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router'; 
-import { UserIcon, CakeIcon } from '@heroicons/react/24/solid';
+import React, { useState } from "react";
+import { NavLink, useNavigate } from "react-router";
+import { UserIcon, CakeIcon } from "@heroicons/react/24/solid";
+import { UserSignUp } from "../core/services/auth.service";
+import Button from "./button";
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const [btnLoading, setBtnLoading] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: 'customer',
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "customer",
   });
   const [errors, setErrors] = useState({});
 
@@ -20,33 +23,47 @@ const SignUp = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
-    if (!formData.password) newErrors.password = 'Password is required';
-    else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    if (!formData.confirmPassword) newErrors.confirmPassword = 'Confirm password is required';
-    else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
-    if (!formData.role) newErrors.role = 'Please select a role';
+    if (!formData.fullName.trim()) newErrors.fullName = "Full name is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
+      newErrors.email = "Invalid email format";
+    if (!formData.password) newErrors.password = "Password is required";
+    else if (formData.password.length < 6)
+      newErrors.password = "Password must be at least 6 characters";
+    if (!formData.confirmPassword)
+      newErrors.confirmPassword = "Confirm password is required";
+    else if (formData.password !== formData.confirmPassword)
+      newErrors.confirmPassword = "Passwords do not match";
+    if (!formData.role) newErrors.role = "Please select a role";
     return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-    try {
-      console.log('Submitting:', formData);
-      setErrors({});
-      alert('Signup successful! Redirecting to login...');
-      navigate('/login');
-    } catch (error) {
-      setErrors({ submit: 'Signup failed. Please try again.' });
-      console.error(error);
-    }
+    setBtnLoading(true);
+    const signUpData = {
+      username: formData.fullName,
+      email: formData.email,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+      role: formData.role,
+    };
+    UserSignUp(signUpData)
+      .then((res) => {
+        setBtnLoading(false);
+        console.log(res.data);
+        window.location.href =
+          res?.data.user.role === "customer" ? "/dashboard" : "/chef-dashboard";
+      })
+      .catch((err) => {
+        setBtnLoading(false);
+        console.log(err);
+        if (err.response && err.response.status === 409) {
+          setErrors({ submit: "Email already exists" });
+        } else {
+          setErrors({ submit: "Signup failed. Please try again." });
+        }
+      });
   };
 
   return (
@@ -58,7 +75,10 @@ const SignUp = () => {
           </h1>
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="fullName"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Full Name
               </label>
               <input
@@ -70,10 +90,17 @@ const SignUp = () => {
                 className="mt-1 w-full p-2 sm:p-3 border border-gray-300 rounded-xl focus:ring-orange-500 focus:border-orange-500 text-sm sm:text-base"
                 placeholder="Enter your full name"
               />
-              {errors.fullName && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.fullName}</p>}
+              {errors.fullName && (
+                <p className="text-red-500 text-xs sm:text-sm mt-1">
+                  {errors.fullName}
+                </p>
+              )}
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email
               </label>
               <input
@@ -85,10 +112,17 @@ const SignUp = () => {
                 className="mt-1 w-full p-2 sm:p-3 border border-gray-300 rounded-xl focus:ring-orange-500 focus:border-orange-500 text-sm sm:text-base"
                 placeholder="Enter your email"
               />
-              {errors.email && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.email}</p>}
+              {errors.email && (
+                <p className="text-red-500 text-xs sm:text-sm mt-1">
+                  {errors.email}
+                </p>
+              )}
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <input
@@ -100,10 +134,17 @@ const SignUp = () => {
                 className="mt-1 w-full p-2 sm:p-3 border border-gray-300 rounded-xl focus:ring-orange-500 focus:border-orange-500 text-sm sm:text-base"
                 placeholder="Enter your password"
               />
-              {errors.password && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.password}</p>}
+              {errors.password && (
+                <p className="text-red-500 text-xs sm:text-sm mt-1">
+                  {errors.password}
+                </p>
+              )}
             </div>
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Confirm Password
               </label>
               <input
@@ -116,7 +157,9 @@ const SignUp = () => {
                 placeholder="Confirm your password"
               />
               {errors.confirmPassword && (
-                <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.confirmPassword}</p>
+                <p className="text-red-500 text-xs sm:text-sm mt-1">
+                  {errors.confirmPassword}
+                </p>
               )}
             </div>
             <div>
@@ -129,38 +172,51 @@ const SignUp = () => {
                     type="radio"
                     name="role"
                     value="customer"
-                    checked={formData.role === 'customer'}
+                    checked={formData.role === "customer"}
                     onChange={handleChange}
                     className="form-radio text-orange-600"
                   />
                   <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
-                  <span className="text-gray-700 text-sm sm:text-base">Customer</span>
+                  <span className="text-gray-700 text-sm sm:text-base">
+                    Customer
+                  </span>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input
                     type="radio"
                     name="role"
                     value="chef"
-                    checked={formData.role === 'chef'}
+                    checked={formData.role === "chef"}
                     onChange={handleChange}
                     className="form-radio text-orange-600"
                   />
                   <CakeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
-                  <span className="text-gray-700 text-sm sm:text-base">Chef</span>
+                  <span className="text-gray-700 text-sm sm:text-base">
+                    Chef
+                  </span>
                 </label>
               </div>
-              {errors.role && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.role}</p>}
+              {errors.role && (
+                <p className="text-red-500 text-xs sm:text-sm mt-1">
+                  {errors.role}
+                </p>
+              )}
             </div>
-            <button
-              type="submit"
+            <Button
+              type={"submit"}
+              isLoading={btnLoading}
+              text={"Signup"}
               className="w-full bg-black text-white font-semibold py-2 sm:py-3 px-4 sm:px-6 rounded-full hover:bg-orange-600 transition-colors duration-300 text-sm sm:text-base"
-            >
-              Sign Up
-            </button>
-            {errors.submit && <p className="text-red-500 text-xs sm:text-sm text-center">{errors.submit}</p>}
+            />
+
+            {errors.submit && (
+              <p className="text-red-500 text-xs sm:text-sm text-center">
+                {errors.submit}
+              </p>
+            )}
           </form>
           <p className="text-center text-gray-600 text-sm sm:text-base mt-4 sm:mt-6">
-            Already have an account?{' '}
+            Already have an account?{" "}
             <NavLink to="/login" className="text-orange-600 hover:underline">
               Log in
             </NavLink>

@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router';
 import { UserIcon, CalendarIcon, BookmarkIcon, CogIcon, BellIcon } from '@heroicons/react/24/solid';
 
 // Mock authentication
-const mockUser = { role: 'customer', id: 1 };
+const mockUser = { role: 'customer', id: 1 }
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();

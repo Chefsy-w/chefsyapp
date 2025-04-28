@@ -8,18 +8,32 @@ import Chefs from "./components/allchefs.jsx";
 import Login from "./components/login.jsx";
 import CustomerDashboard from "./components/customerdashboard.jsx";
 import ChefDashboard from "./components/chefdashboard.jsx";
+import { useState } from "react";
+import { getUserSession } from "./core/utils/index.js";
+import NotFound from "./components/notfound.jsx";
 function App() {
+  const [userSession] = useState(getUserSession());
+
   return (
     <BrowserRouter>
-    <Navbar />
+      <Navbar />
       <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/register" element={<SignUp />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/book-chef" element={<Booking />} />
-        <Route path="/all-chefs" element={<Chefs />} />
-        <Route path="/customerdashboard" element={<CustomerDashboard />} />
-        <Route path="/chefdashboard" element={<ChefDashboard />} />
+        {!userSession ? (
+          <>
+            <Route path="/" element={<Landing />} />
+            <Route path="/register" element={<SignUp />} />
+            <Route path="/login" element={<Login />} />{" "}
+          </>
+        ) : (
+          <>
+            <Route path="/all-chefs" element={<Chefs />} />{" "}
+            <Route path="/booking" element={<Booking />} />
+            <Route path="/dashboard" element={<CustomerDashboard />} />
+            <Route path="/chef-dashboard" element={<ChefDashboard />} />
+          </>
+        )}
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
