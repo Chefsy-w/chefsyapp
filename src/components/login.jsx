@@ -50,7 +50,7 @@ const Login = () => {
           expiryDate
         );
         window.location.href =
-          res?.data.user.role === "customer" ? "/dashboard" : "/chef-dashboard";
+          res?.data.user.role === "customer" ? "dashboard" : "chef-dashboard";
       })
       .catch((err) => {
         console.log(err);
